@@ -1,27 +1,28 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import login_required, current_user
-from models import db, Task, Subject, Exam
-from forms import TaskForm, ExamForm, SubjectForm
+from study_planner_flask.models import db, Task, Subject, Exam
+from study_planner_flask.forms import TaskForm, ExamForm, SubjectForm
 from datetime import datetime, timedelta
 
 tasks_bp = Blueprint('tasks', __name__)
 
 def get_subject_choices():
     """Get subject choices for the current user"""
-    subjects = Subject.query.filter_by(user_id=current_user.id).all()
-    if not subjects:
-        # If no subjects exist, create a default one
-        default_subject = Subject(
-            user_id=current_user.id,
-            name="General",
-            color="#4f46e5",
-            description="Default subject for general tasks"
-        )
-        db.session.add(default_subject)
-        db.session.commit()
-        subjects = [default_subject]
-    
-    return [(s.id, s.name) for s in subjects]
+    with current_app.app_context():
+        subjects = Subject.query.filter_by(user_id=current_user.id).all()
+        if not subjects:
+            # If no subjects exist, create a default one
+            default_subject = Subject(
+                user_id=current_user.id,
+                name="General",
+                color="#4f46e5",
+                description="Default subject for general tasks"
+            )
+            db.session.add(default_subject)
+            db.session.commit()
+            subjects = [default_subject]
+        
+        return [(s.id, s.name) for s in subjects]
 
 @tasks_bp.route("/new", methods=["GET", "POST"])
 @login_required
@@ -30,21 +31,22 @@ def add_task():
     form.subject_id.choices = get_subject_choices()
     
     if form.validate_on_submit():
-        task = Task(
-            user_id=current_user.id,
-            subject_id=form.subject_id.data,
-            title=form.title.data,
-            notes=form.notes.data,
-            due_date=form.due_date.data,
-            due_time=form.due_time.data,
-            priority=form.priority.data,
-            reminder_at=form.reminder_at.data,
-            repeat_rule=form.repeat_rule.data,
-            status="pending",
-            created_at=datetime.utcnow()
-        )
-        db.session.add(task)
-        db.session.commit()
+        with current_app.app_context():
+            task = Task(
+                user_id=current_user.id,
+                subject_id=form.subject_id.data,
+                title=form.title.data,
+                notes=form.notes.data,
+                due_date=form.due_date.data,
+                due_time=form.due_time.data,
+                priority=form.priority.data,
+                reminder_at=form.reminder_at.data,
+                repeat_rule=form.repeat_rule.data,
+                status="pending",
+                created_at=datetime.utcnow()
+            )
+            db.session.add(task)
+            db.session.commit()
         
         flash("Task added successfully!", "success")
         return redirect(url_for("dashboard"))
@@ -54,26 +56,28 @@ def add_task():
 @tasks_bp.route("/<int:task_id>/edit", methods=["GET", "POST"])
 @login_required
 def edit_task(task_id):
-    task = Task.query.get_or_404(task_id)
-    if task.user_id != current_user.id:
-        flash("Access denied.", "error")
-        return redirect(url_for("dashboard"))
+    with current_app.app_context():
+        task = Task.query.get_or_404(task_id)
+        if task.user_id != current_user.id:
+            flash("Access denied.", "error")
+            return redirect(url_for("dashboard"))
     
     form = TaskForm(obj=task)
     form.subject_id.choices = get_subject_choices()
     
     if form.validate_on_submit():
-        task.subject_id = form.subject_id.data
-        task.title = form.title.data
-        task.notes = form.notes.data
-        task.due_date = form.due_date.data
-        task.due_time = form.due_time.data
-        task.priority = form.priority.data
-        task.reminder_at = form.reminder_at.data
-        task.repeat_rule = form.repeat_rule.data
-        task.updated_at = datetime.utcnow()
-        
-        db.session.commit()
+        with current_app.app_context():
+            task.subject_id = form.subject_id.data
+            task.title = form.title.data
+            task.notes = form.notes.data
+            task.due_date = form.due_date.data
+            task.due_time = form.due_time.data
+            task.priority = form.priority.data
+            task.reminder_at = form.reminder_at.data
+            task.repeat_rule = form.repeat_rule.data
+            task.updated_at = datetime.utcnow()
+            
+            db.session.commit()
         flash("Task updated successfully!", "success")
         return redirect(url_for("dashboard"))
     
@@ -82,26 +86,28 @@ def edit_task(task_id):
 @tasks_bp.route("/<int:task_id>/complete", methods=["POST"])
 @login_required
 def complete_task(task_id):
-    task = Task.query.get_or_404(task_id)
-    if task.user_id != current_user.id:
-        return jsonify({"error": "Access denied"}), 403
-    
-    task.status = "completed"
-    task.completed_at = datetime.utcnow()
-    db.session.commit()
+    with current_app.app_context():
+        task = Task.query.get_or_404(task_id)
+        if task.user_id != current_user.id:
+            return jsonify({"error": "Access denied"}), 403
+        
+        task.status = "completed"
+        task.completed_at = datetime.utcnow()
+        db.session.commit()
     
     return jsonify({"success": True, "status": "completed"})
 
 @tasks_bp.route("/<int:task_id>/delete", methods=["POST"])
 @login_required
 def delete_task(task_id):
-    task = Task.query.get_or_404(task_id)
-    if task.user_id != current_user.id:
-        flash("Access denied.", "error")
-        return redirect(url_for("dashboard"))
-    
-    db.session.delete(task)
-    db.session.commit()
+    with current_app.app_context():
+        task = Task.query.get_or_404(task_id)
+        if task.user_id != current_user.id:
+            flash("Access denied.", "error")
+            return redirect(url_for("dashboard"))
+        
+        db.session.delete(task)
+        db.session.commit()
     flash("Task deleted successfully!", "success")
     return redirect(url_for("dashboard"))
 
