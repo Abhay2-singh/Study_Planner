@@ -5,3 +5,5 @@ flask_login
 wtforms
 email_validator
 werkzeug
+gunicorn
+waitress
