@@ -1,0 +1,415 @@
+{% extends "base.html" %}
+
+{% block title %}AI Smart Calendar - Study Planning{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ai-calendar-container {
+        background: var(--ai-surface-card);
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: var(--ai-shadow);
+        border: 1px solid var(--ai-border);
+        backdrop-filter: blur(10px);
+    }
+    
+    .ai-calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    
+    .ai-calendar-controls {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .ai-calendar-view-toggle {
+        display: flex;
+        background: var(--ai-border);
+        border-radius: 12px;
+        padding: 0.25rem;
+    }
+    
+    .ai-calendar-view-btn {
+        background: none;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        color: var(--ai-text-secondary);
+        cursor: pointer;
+        transition: var(--ai-transition);
+        font-weight: 500;
+    }
+    
+    .ai-calendar-view-btn.active {
+        background: var(--ai-gradient-primary);
+        color: white;
+        box-shadow: var(--ai-shadow);
+    }
+    
+    .ai-calendar-view-btn:hover:not(.active) {
+        background: var(--ai-surface);
+        color: var(--ai-text-primary);
+    }
+    
+    .fc {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .fc-toolbar-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--ai-text-primary);
+        background: var(--ai-gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .fc-button {
+        background: var(--ai-gradient-primary) !important;
+        border: none !important;
+        color: white !important;
+        border-radius: 12px !important;
+        padding: 0.5rem 1rem !important;
+        font-weight: 600 !important;
+        transition: var(--ai-transition) !important;
+        box-shadow: var(--ai-shadow) !important;
+    }
+    
+    .fc-button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: var(--ai-shadow-hover) !important;
+    }
+    
+    .fc-button:focus {
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1) !important;
+    }
+    
+    .fc-daygrid-day {
+        background: var(--ai-surface) !important;
+        border-color: var(--ai-border) !important;
+    }
+    
+    .fc-daygrid-day:hover {
+        background: var(--ai-gradient-light) !important;
+    }
+    
+    .fc-daygrid-day.fc-day-today {
+        background: var(--ai-gradient-primary) !important;
+        color: white !important;
+    }
+    
+    .fc-event {
+        border-radius: 8px !important;
+        border: none !important;
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.875rem !important;
+        font-weight: 500 !important;
+        cursor: pointer !important;
+        transition: var(--ai-transition) !important;
+        box-shadow: var(--ai-shadow) !important;
+    }
+    
+    .fc-event:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: var(--ai-shadow-hover) !important;
+    }
+    
+    .fc-event.task {
+        background: var(--ai-gradient-primary) !important;
+        color: white !important;
+    }
+    
+    .fc-event.exam {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+        color: white !important;
+    }
+    
+    .fc-event.overdue {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+        color: white !important;
+        opacity: 0.9;
+    }
+    
+    .fc-event.completed {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        color: white !important;
+        text-decoration: line-through;
+    }
+    
+    .ai-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        backdrop-filter: blur(10px);
+    }
+    
+    .ai-modal__content {
+        background: var(--ai-surface-card);
+        border-radius: 16px;
+        padding: 2rem;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: var(--ai-shadow-hover);
+        border: 1px solid var(--ai-border);
+        backdrop-filter: blur(20px);
+    }
+    
+    .ai-modal__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--ai-border);
+    }
+    
+    .ai-modal__title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--ai-text-primary);
+    }
+    
+    .ai-modal__close {
+        background: none;
+        border: none;
+        color: var(--ai-text-secondary);
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 8px;
+        transition: var(--ai-transition);
+    }
+    
+    .ai-modal__close:hover {
+        background: var(--ai-border);
+        color: var(--ai-text-primary);
+    }
+    
+    .ai-event-details {
+        margin-bottom: 1.5rem;
+    }
+    
+    .ai-event-detail {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--ai-border);
+    }
+    
+    .ai-event-detail:last-child {
+        border-bottom: none;
+    }
+    
+    .ai-event-detail__label {
+        font-weight: 600;
+        color: var(--ai-text-secondary);
+    }
+    
+    .ai-event-detail__value {
+        color: var(--ai-text-primary);
+    }
+    
+    .ai-modal__footer {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--ai-border);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ai-page-container">
+    <div class="ai-page-header">
+        <div class="ai-page-header__content">
+            <h1 class="ai-page-title">🧠 AI Smart Calendar</h1>
+            <p class="ai-page-subtitle">Intelligent scheduling and visual organization</p>
+        </div>
+        <div class="ai-page-header__actions">
+            <a href="{{ url_for('tasks.add_task') }}" class="ai-btn ai-btn--primary">
+                <span class="material-icons">psychology</span>
+                Add Smart Task
+            </a>
+            <a href="{{ url_for('tasks.add_exam') }}" class="ai-btn ai-btn--secondary">
+                <span class="material-icons">quiz</span>
+                Schedule Exam
+            </a>
+        </div>
+    </div>
+
+    <div class="ai-calendar-container">
+        <div class="ai-calendar-header">
+            <div class="ai-calendar-controls">
+                <div class="ai-calendar-view-toggle">
+                    <button class="ai-calendar-view-btn active" data-view="dayGridMonth">Month</button>
+                    <button class="ai-calendar-view-btn" data-view="timeGridWeek">Week</button>
+                    <button class="ai-calendar-view-btn" data-view="timeGridDay">Day</button>
+                </div>
+            </div>
+            
+            <div class="ai-calendar-actions">
+                <button class="ai-btn ai-btn--ghost" id="today-btn">
+                    <span class="material-icons">today</span>
+                    Today
+                </button>
+            </div>
+        </div>
+        
+        <div id="calendar"></div>
+    </div>
+</div>
+
+<!-- AI Event Details Modal -->
+<div class="ai-modal" id="event-modal" x-data="{ open: false, event: null }" x-show="open" x-cloak>
+    <div class="ai-modal__content">
+        <div class="ai-modal__header">
+            <h3 class="ai-modal__title" x-text="event?.title || 'AI Event Details'"></h3>
+            <button class="ai-modal__close" @click="open = false">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+        
+        <div class="ai-modal__body" x-show="event">
+            <div class="ai-event-details">
+                <div class="ai-event-detail">
+                    <span class="ai-event-detail__label">Type:</span>
+                    <span class="ai-event-detail__value" x-text="event?.type || 'Unknown'"></span>
+                </div>
+                
+                <div class="ai-event-detail" x-show="event?.subject">
+                    <span class="ai-event-detail__label">Subject:</span>
+                    <span class="ai-event-detail__value" x-text="event?.subject"></span>
+                </div>
+                
+                <div class="ai-event-detail" x-show="event?.due_date || event?.date">
+                    <span class="ai-event-detail__label">Date:</span>
+                    <span class="ai-event-detail__value" x-text="event?.due_date || event?.date"></span>
+                </div>
+                
+                <div class="ai-event-detail" x-show="event?.time">
+                    <span class="ai-event-detail__label">Time:</span>
+                    <span class="ai-event-detail__value" x-text="event?.time"></span>
+                </div>
+                
+                <div class="ai-event-detail" x-show="event?.priority">
+                    <span class="ai-event-detail__label">Priority:</span>
+                    <span class="ai-event-detail__value" x-text="event?.priority"></span>
+                </div>
+                
+                <div class="ai-event-detail" x-show="event?.location">
+                    <span class="ai-event-detail__label">Location:</span>
+                    <span class="ai-event-detail__value" x-text="event?.location"></span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="ai-modal__footer" x-show="event">
+            <button class="ai-btn ai-btn--secondary" @click="open = false">Close</button>
+            <button class="ai-btn ai-btn--primary" x-show="event?.type === 'task'" @click="editTask(event?.id)">
+                <span class="material-icons">edit</span>
+                Edit Task
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize FullCalendar with AI theme
+        const calendarEl = document.getElementById('calendar');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next',
+                center: 'title',
+                right: ''
+            },
+            height: 'auto',
+            events: '/tasks/api/events',
+            eventClick: function(info) {
+                showEventModal(info.event);
+            },
+            eventDidMount: function(info) {
+                // Add AI-themed styling based on event type and status
+                if (info.event.extendedProps.type === 'task') {
+                    if (info.event.extendedProps.status === 'overdue') {
+                        info.el.classList.add('overdue');
+                    } else if (info.event.extendedProps.status === 'completed') {
+                        info.el.classList.add('completed');
+                    }
+                    info.el.classList.add('task');
+                } else if (info.event.extendedProps.type === 'exam') {
+                    info.el.classList.add('exam');
+                }
+            },
+            dayMaxEvents: true,
+            moreLinkClick: 'popover',
+            eventTimeFormat: {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            }
+        });
+        
+        calendar.render();
+        
+        // AI-themed view toggle functionality
+        document.querySelectorAll('.ai-calendar-view-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const view = this.dataset.view;
+                
+                // Update active state
+                document.querySelectorAll('.ai-calendar-view-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Change calendar view
+                calendar.changeView(view);
+            });
+        });
+        
+        // Today button functionality
+        document.getElementById('today-btn').addEventListener('click', function() {
+            calendar.today();
+        });
+        
+        // AI Event modal functionality
+        window.showEventModal = function(event) {
+            const modal = document.getElementById('event-modal');
+            const eventData = {
+                id: event.id,
+                title: event.title,
+                type: event.extendedProps.type,
+                subject: event.extendedProps.subject,
+                due_date: event.start ? event.start.toLocaleDateString() : null,
+                date: event.start ? event.start.toLocaleDateString() : null,
+                time: event.start ? event.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : null,
+                priority: event.extendedProps.priority,
+                location: event.extendedProps.location
+            };
+            
+            modal.__x.$data.event = eventData;
+            modal.__x.$data.open = true;
+        };
+        
+        window.editTask = function(taskId) {
+            if (taskId) {
+                window.location.href = `/tasks/${taskId}/edit`;
+            }
+        };
+    });
+</script>
+{% endblock %}

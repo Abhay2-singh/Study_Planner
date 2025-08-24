@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ current_user.theme if current_user.is_authenticated else 'light' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ config.STUDY_PLANNER_NAME }}{% endblock %}</title>
+    
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ai-theme.css') }}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Top App Bar -->
+    <header class="top-app-bar" role="banner">
+        <div class="top-app-bar__container">
+            <div class="top-app-bar__section top-app-bar__section--start">
+                <button class="material-icons top-app-bar__navigation-icon" id="menu-toggle">
+                    menu
+                </button>
+                <span class="top-app-bar__title">
+                    <a href="{{ url_for('index') }}" class="logo-link">
+                        🧠 AI Study Planner
+                    </a>
+                </span>
+            </div>
+            
+            <div class="top-app-bar__section top-app-bar__section--end">
+                {% if current_user.is_authenticated %}
+                    <div class="user-menu" x-data="{ open: false }">
+                        <button class="material-icons user-avatar" @click="open = !open">
+                            account_circle
+                        </button>
+                        <div class="user-dropdown" x-show="open" @click.away="open = false">
+                            <a href="{{ url_for('dashboard') }}" class="dropdown-item">
+                                <span class="material-icons">dashboard</span>
+                                Dashboard
+                            </a>
+                            <a href="{{ url_for('progress') }}" class="dropdown-item">
+                                <span class="material-icons">trending_up</span>
+                                Progress
+                            </a>
+                            <a href="{{ url_for('settings') }}" class="dropdown-item">
+                                <span class="material-icons">settings</span>
+                                Settings
+                            </a>
+                            <hr class="dropdown-divider">
+                            <a href="{{ url_for('auth.logout') }}" class="dropdown-item">
+                                <span class="material-icons">logout</span>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="btn btn--text">Sign In</a>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn--filled">Sign Up</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Drawer -->
+    {% if current_user.is_authenticated %}
+    <aside class="navigation-drawer" id="navigation-drawer">
+        <div class="navigation-drawer__header">
+            <div class="user-info">
+                <div class="user-avatar-large">
+                    <span class="material-icons">account_circle</span>
+                </div>
+                <div class="user-details">
+                    <h3 class="user-name">{{ current_user.name }}</h3>
+                    <p class="user-email">{{ current_user.email }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="navigation-drawer__content">
+            <ul class="navigation-list">
+                <li class="navigation-item">
+                    <a href="{{ url_for('dashboard') }}" class="navigation-link">
+                        <span class="material-icons">dashboard</span>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="navigation-item">
+                    <a href="{{ url_for('tasks.add_task') }}" class="navigation-link">
+                        <span class="material-icons">add_task</span>
+                        <span>Add Task</span>
+                    </a>
+                </li>
+                <li class="navigation-item">
+                    <a href="{{ url_for('tasks.add_exam') }}" class="navigation-link">
+                        <span class="material-icons">quiz</span>
+                        <span>Add Exam</span>
+                    </a>
+                </li>
+                <li class="navigation-item">
+                    <a href="{{ url_for('calendar') }}" class="navigation-link">
+                        <span class="material-icons">calendar_today</span>
+                        <span>Calendar</span>
+                    </a>
+                </li>
+                <li class="navigation-item">
+                    <a href="{{ url_for('progress') }}" class="navigation-link">
+                        <span class="material-icons">trending_up</span>
+                        <span>Progress</span>
+                    </a>
+                </li>
+                <li class="navigation-item">
+                    <a href="{{ url_for('tasks.manage_subjects') }}" class="navigation-link">
+                        <span class="material-icons">school</span>
+                        <span>Subjects</span>
+                    </a>
+                </li>
+                <li class="navigation-item">
+                    <a href="{{ url_for('test_buttons') }}" class="navigation-link">
+                        <span class="material-icons">bug_report</span>
+                        <span>Test Buttons</span>
+                    </a>
+                </li>
+                <li class="navigation-item">
+                    <a href="{{ url_for('debug_buttons') }}" class="navigation-link">
+                        <span class="material-icons">code</span>
+                        <span>Debug Buttons</span>
+                    </a>
+                </li>
+                <li class="navigation-item">
+                    <a href="{{ url_for('settings') }}" class="navigation-link">
+                        <span class="material-icons">settings</span>
+                        <span>Settings</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="main-content" id="main-content">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert--{{ category }} alert--dismissible" role="alert">
+                            <span class="alert__message">{{ message }}</span>
+                            <button class="alert__dismiss" type="button" aria-label="Dismiss">
+                                <span class="material-icons">close</span>
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Page Content -->
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Floating Action Button -->
+    {% if current_user.is_authenticated %}
+    <button class="fab fab--primary" id="fab" aria-label="Add new item">
+        <span class="material-icons">add</span>
+    </button>
+    
+    <!-- FAB Menu -->
+    <div class="fab-menu" id="fab-menu" x-data="{ open: false }">
+        <div class="fab-menu__items" x-show="open" x-transition>
+            <a href="{{ url_for('tasks.add_task') }}" class="fab-menu__item">
+                <span class="material-icons">add_task</span>
+                <span>Add Task</span>
+            </a>
+            <a href="{{ url_for('tasks.add_exam') }}" class="fab-menu__item">
+                <span class="material-icons">quiz</span>
+                <span>Add Exam</span>
+            </a>
+            <a href="{{ url_for('tasks.manage_subjects') }}" class="fab-menu__item">
+                <span class="material-icons">school</span>
+                <span>Manage Subjects</span>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+    
+    <script>
+        // FAB Menu Toggle
+        document.getElementById('fab')?.addEventListener('click', function() {
+            const fabMenu = document.getElementById('fab-menu');
+            if (fabMenu) {
+                const isOpen = fabMenu.__x.$data.open;
+                fabMenu.__x.$data.open = !isOpen;
+            }
+        });
+
+        // Navigation Drawer Toggle
+        document.getElementById('menu-toggle')?.addEventListener('click', function() {
+            const drawer = document.getElementById('navigation-drawer');
+            const mainContent = document.getElementById('main-content');
+            
+            if (drawer && mainContent) {
+                drawer.classList.toggle('navigation-drawer--open');
+                mainContent.classList.toggle('main-content--drawer-open');
+            }
+        });
+
+        // Auto-dismiss flash messages
+        document.querySelectorAll('.alert--dismissible').forEach(alert => {
+            const dismissBtn = alert.querySelector('.alert__dismiss');
+            if (dismissBtn) {
+                dismissBtn.addEventListener('click', () => {
+                    alert.remove();
+                });
+            }
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            }, 5000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+{% block title %}AI Dashboard - Smart Study Planning{% endblock %}
+
+{% block content %}
+<!-- AI Dashboard Header -->
+<div class="dashboard-header">
+    <div class="dashboard-header__content">
+        <h1 class="dashboard-header__title">Welcome back, {{ current_user.name }}! 🧠</h1>
+        <p class="dashboard-header__subtitle">Your AI-powered study overview for today</p>
+    </div>
+    <div class="dashboard-header__actions">
+        <button class="ai-btn ai-btn--ghost" id="theme-toggle">
+            <span class="material-icons">dark_mode</span>
+        </button>
+    </div>
+</div>
+
+<!-- AI Quick Stats -->
+<div class="dashboard-stats">
+    <div class="stat-card">
+        <div class="stat-card__icon">
+            <span class="material-icons">psychology</span>
+        </div>
+        <div class="stat-card__content">
+            <div class="stat-number">{{ tasks|length }}</div>
+            <div class="stat-label">Total Tasks</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-card__icon">
+            <span class="material-icons">check_circle</span>
+        </div>
+        <div class="stat-card__content">
+            <div class="stat-number">{{ tasks|selectattr('status', 'equalto', 'completed')|list|length }}</div>
+            <div class="stat-label">Completed</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-card__icon">
+            <span class="material-icons">schedule</span>
+        </div>
+        <div class="stat-card__content">
+            <div class="stat-number">{{ tasks|selectattr('status', 'equalto', 'pending')|list|length }}</div>
+            <div class="stat-label">Pending</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-card__icon">
+            <span class="material-icons">warning</span>
+        </div>
+        <div class="stat-card__content">
+            <div class="stat-number">{{ tasks|selectattr('status', 'equalto', 'overdue')|list|length }}</div>
+            <div class="stat-label">Overdue</div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Dashboard Content -->
+<div class="dashboard-grid">
+    <!-- Today's Tasks -->
+    <div class="ai-card">
+        <div class="section-header">
+            <h2 class="section-title ai-text-gradient">Today's AI-Optimized Tasks</h2>
+            <a href="{{ url_for('tasks.add_task') }}" class="ai-btn ai-btn--primary">
+                <span class="material-icons">add</span>
+                Add Task
+            </a>
+        </div>
+        
+        {% if tasks %}
+            <div class="task-list">
+                {% for task in tasks %}
+                    {% if task.due_date == today %}
+                    <div class="task-item task-item--{{ task.priority }} task-item--{{ task.status }}" data-task-id="{{ task.id }}">
+                        <div class="task-item__checkbox">
+                            <input type="checkbox" class="task-checkbox" data-task-id="{{ task.id }}" 
+                                   {% if task.status == 'completed' %}checked{% endif %}>
+                        </div>
+                        <div class="task-item__content">
+                            <h3 class="task-title">{{ task.title }}</h3>
+                            <div class="task-item__meta">
+                                <span class="task-subject" style="color: {{ task.subject.color if task.subject else '#4f46e5' }}">
+                                    {{ task.subject.name if task.subject else 'No Subject' }}
+                                </span>
+                                <span class="task-due-date">
+                                    <span class="material-icons">schedule</span>
+                                    {{ task.due_date.strftime('%b %d') }}
+                                    {% if task.due_time %}
+                                        at {{ task.due_time.strftime('%I:%M %p') }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                            {% if task.notes %}
+                                <p class="task-item__notes">{{ task.notes }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="task-item__actions">
+                            <span class="task-priority task-priority--{{ task.priority }}">
+                                {{ task.priority|title }}
+                            </span>
+                            <div class="task-item__menu">
+                                <button class="ai-btn ai-btn--ghost">
+                                    <span class="material-icons">more_vert</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state__icon">
+                    <span class="material-icons">psychology</span>
+                </div>
+                <h3 class="empty-state__title">No tasks for today</h3>
+                <p class="empty-state__description">Great job! Your AI assistant says you're all caught up.</p>
+                <a href="{{ url_for('tasks.add_task') }}" class="ai-btn ai-btn--primary">
+                    <span class="material-icons">add</span>
+                    Add Your First Task
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- AI Progress Overview -->
+    <div class="ai-card">
+        <div class="section-header">
+            <h2 class="section-title ai-text-gradient">AI Progress Analytics</h2>
+        </div>
+        
+        <div class="progress-overview">
+            <div class="chart-container" 
+                 data-completed="{{ tasks|selectattr('status', 'equalto', 'completed')|list|length }}"
+                 data-pending="{{ tasks|selectattr('status', 'equalto', 'pending')|list|length }}"
+                 data-overdue="{{ tasks|selectattr('status', 'equalto', 'overdue')|list|length }}">
+                <canvas id="progress-chart" width="300" height="300"></canvas>
+            </div>
+            
+            <div class="progress-stats">
+                <div class="progress-stat">
+                    <div class="progress-stat__label">Overall Progress</div>
+                    <div class="progress-stat__value ai-text-gradient">
+                        {% set completed = tasks|selectattr('status', 'equalto', 'completed')|list|length %}
+                        {% set total = tasks|length %}
+                        {% if total > 0 %}
+                            {{ ((completed / total) * 100)|round|int }}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="progress-stat">
+                    <div class="progress-stat__label">AI Study Goal</div>
+                    <div class="progress-stat__value">{{ current_user.study_goal_hours }}h/day</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upcoming Tasks & AI Insights -->
+<div class="dashboard-grid">
+    <!-- Upcoming Tasks -->
+    <div class="ai-card">
+        <div class="section-header">
+            <h2 class="section-title ai-text-gradient">Upcoming AI-Prioritized Tasks</h2>
+            <a href="{{ url_for('calendar') }}" class="ai-btn ai-btn--secondary">View All</a>
+        </div>
+        
+        <div class="upcoming-list">
+            {% for task in tasks|sort(attribute='due_date') %}
+                {% if task.due_date > today and loop.index <= 5 %}
+                <div class="upcoming-item upcoming-item--task">
+                    <div class="upcoming-item__date">
+                        <div class="upcoming-item__day">{{ task.due_date.strftime('%d') }}</div>
+                        <div class="upcoming-item__month">{{ task.due_date.strftime('%b') }}</div>
+                    </div>
+                    <div class="upcoming-item__content">
+                        <h4 class="upcoming-item__title">{{ task.title }}</h4>
+                        <p class="upcoming-item__subject">{{ task.subject.name if task.subject else 'No Subject' }}</p>
+                    </div>
+                    <div class="upcoming-item__priority">
+                        <span class="task-priority task-priority--{{ task.priority }}">
+                            {{ task.priority|title }}
+                        </span>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- AI Study Time Analytics -->
+    <div class="ai-card">
+        <div class="section-header">
+            <h2 class="section-title ai-text-gradient">AI Study Time Analytics</h2>
+        </div>
+        
+        <div class="chart-container">
+            <canvas id="study-time-chart" width="400" height="200"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- AI Quick Actions -->
+<div class="ai-card">
+    <h2 class="section-title ai-text-gradient">AI-Powered Quick Actions</h2>
+    <div class="quick-actions__grid">
+        <button class="ai-btn ai-btn--primary" data-action="add-task">
+            <span class="material-icons">psychology</span>
+            <span>Add Smart Task</span>
+        </button>
+        
+        <button class="ai-btn ai-btn--secondary" data-action="add-exam">
+            <span class="material-icons">quiz</span>
+            <span>Schedule Exam</span>
+        </button>
+        
+        <button class="ai-btn ai-btn--ghost" data-action="start-pomodoro">
+            <span class="material-icons">timer</span>
+            <span>AI Pomodoro</span>
+        </button>
+        
+        <button class="ai-btn ai-btn--ghost" data-action="view-calendar">
+            <span class="material-icons">calendar_today</span>
+            <span>Smart Calendar</span>
+        </button>
+        
+        <button class="ai-btn ai-btn--ghost" data-action="manage-subjects">
+            <span class="material-icons">school</span>
+            <span>Manage Subjects</span>
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // AI Dashboard-specific JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Dashboard loaded - setting up quick actions...');
+        
+        // Ensure quick actions are set up
+        if (typeof setupQuickActions === 'function') {
+            setupQuickActions();
+        } else {
+            console.error('setupQuickActions function not found!');
+        }
+        
+        // Initialize AI-themed charts
+        if (typeof StudyPlannerCharts !== 'undefined') {
+            // Progress chart data
+            const progressChartElement = document.querySelector('.progress-chart');
+            const progressData = {
+                completed: parseInt(progressChartElement.dataset.completed) || 0,
+                pending: parseInt(progressChartElement.dataset.pending) || 0,
+                overdue: parseInt(progressChartElement.dataset.overdue) || 0
+            };
+            
+            // Study time chart data (mock data for now)
+            const studyTimeData = {
+                days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                hours: [4, 3, 5, 2, 6, 4, 3]
+            };
+            
+            // Create AI-themed charts
+            const progressChart = StudyPlannerCharts.createTaskCompletionChart(
+                document.getElementById('progress-chart'), 
+                progressData
+            );
+            
+            const studyTimeChart = StudyPlannerCharts.createWeeklyTrendChart(
+                document.getElementById('study-time-chart'), 
+                studyTimeData
+            );
+        }
+        
+        // Add AI-themed animations
+        document.querySelectorAll('.stat-card').forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.1}s`;
+            card.classList.add('fade-in-up');
+        });
+        
+        document.querySelectorAll('.task-item').forEach((item, index) => {
+            item.style.animationDelay = `${index * 0.05}s`;
+            item.classList.add('fade-in-up');
+        });
+    });
+</script>
+{% endblock %}

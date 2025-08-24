@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Add AI Task - Smart Study Planning{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ai-page-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .ai-page-header {
+        background: var(--ai-gradient-primary);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .ai-page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="2" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23dots)"/></svg>');
+    }
+    
+    .ai-page-header__content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .ai-page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .ai-page-subtitle {
+        font-size: 1rem;
+        opacity: 0.9;
+    }
+    
+    .ai-page-header__actions {
+        position: relative;
+        z-index: 2;
+        margin-top: 1rem;
+    }
+    
+    .ai-form-container {
+        background: var(--ai-surface-card);
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: var(--ai-shadow);
+        border: 1px solid var(--ai-border);
+        backdrop-filter: blur(10px);
+    }
+    
+    .ai-form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .ai-form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--ai-border);
+    }
+    
+    @media (max-width: 768px) {
+        .ai-page-container {
+            padding: 1rem;
+        }
+        
+        .ai-form-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .ai-form-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ai-page-container">
+    <div class="ai-page-header">
+        <div class="ai-page-header__content">
+            <h1 class="ai-page-title">🧠 Add AI-Optimized Task</h1>
+            <p class="ai-page-subtitle">Create a smart task with AI-powered organization</p>
+        </div>
+        <div class="ai-page-header__actions">
+            <a href="{{ url_for('dashboard') }}" class="ai-btn ai-btn--ghost">
+                <span class="material-icons">arrow_back</span>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="ai-form-container">
+        <form method="POST" class="task-form">
+            {{ form.hidden_tag() }}
+            
+            <div class="ai-form-grid">
+                <div class="ai-form-group">
+                    {{ form.title.label(class="ai-form-label") }}
+                    {{ form.title(class="ai-form-input", placeholder="Enter task title") }}
+                    {% if form.title.errors %}
+                        <div class="ai-form-error">
+                            {% for error in form.title.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                            <div class="ai-form-group">
+                {{ form.subject_id.label(class="ai-form-label") }}
+                {{ form.subject_id(class="ai-form-select") }}
+                {% if form.subject_id.errors %}
+                    <div class="ai-form-error">
+                        {% for error in form.subject_id.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                {% if form.subject_id.choices|length == 1 %}
+                    <div class="ai-form-help">
+                        <p>Only one subject available. <a href="{{ url_for('tasks.manage_subjects') }}" class="ai-link">Create more subjects</a> to better organize your tasks.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+                <div class="ai-form-group">
+                    {{ form.due_date.label(class="ai-form-label") }}
+                    {{ form.due_date(class="ai-form-input", type="date") }}
+                    {% if form.due_date.errors %}
+                        <div class="ai-form-error">
+                            {% for error in form.due_date.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="ai-form-group">
+                    {{ form.due_time.label(class="ai-form-label") }}
+                    {{ form.due_time(class="ai-form-input", type="time") }}
+                    {% if form.due_time.errors %}
+                        <div class="ai-form-error">
+                            {% for error in form.due_time.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="ai-form-group">
+                    {{ form.priority.label(class="ai-form-label") }}
+                    {{ form.priority(class="ai-form-select") }}
+                    {% if form.priority.errors %}
+                        <div class="ai-form-error">
+                            {% for error in form.priority.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="ai-form-group">
+                    {{ form.repeat_rule.label(class="ai-form-label") }}
+                    {{ form.repeat_rule(class="ai-form-select") }}
+                    {% if form.repeat_rule.errors %}
+                        <div class="ai-form-error">
+                            {% for error in form.repeat_rule.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="ai-form-group">
+                {{ form.notes.label(class="ai-form-label") }}
+                {{ form.notes(class="ai-form-input", style="resize: vertical; min-height: 100px;", placeholder="Add any additional notes or details for AI optimization...") }}
+                {% if form.notes.errors %}
+                    <div class="ai-form-error">
+                        {% for error in form.notes.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="ai-form-group">
+                {{ form.reminder_at.label(class="ai-form-label") }}
+                {{ form.reminder_at(class="ai-form-input", type="datetime-local") }}
+                {% if form.reminder_at.errors %}
+                    <div class="ai-form-error">
+                        {% for error in form.reminder_at.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="ai-form-actions">
+                <a href="{{ url_for('dashboard') }}" class="ai-btn ai-btn--secondary">Cancel</a>
+                {{ form.submit(class="ai-btn ai-btn--primary") }}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

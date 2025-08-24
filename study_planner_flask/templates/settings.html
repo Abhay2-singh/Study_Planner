@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - {{ config.STUDY_PLANNER_NAME }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <div class="page-header__content">
+            <h1 class="page-title">Settings</h1>
+            <p class="page-subtitle">Customize your study planner experience</p>
+        </div>
+    </div>
+
+    <div class="settings-grid">
+        <!-- Profile Settings -->
+        <div class="settings-section">
+            <div class="section-header">
+                <h2 class="section-title">Profile</h2>
+                <p class="section-subtitle">Manage your personal information</p>
+            </div>
+            
+            <div class="settings-form">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" class="form-control" value="{{ current_user.name }}" disabled>
+                    <small class="form-help">Contact support to change your name</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" value="{{ current_user.email }}" disabled>
+                    <small class="form-help">Contact support to change your email</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Member Since</label>
+                    <input type="text" class="form-control" value="{{ current_user.created_at.strftime('%B %d, %Y') }}" disabled>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appearance Settings -->
+        <div class="settings-section">
+            <div class="section-header">
+                <h2 class="section-title">Appearance</h2>
+                <p class="section-subtitle">Customize the look and feel</p>
+            </div>
+            
+            <div class="settings-form">
+                <div class="form-group">
+                    <label class="form-label">Theme</label>
+                    <div class="theme-toggle">
+                        <button class="theme-btn theme-btn--light" data-theme="light">
+                            <span class="material-icons">light_mode</span>
+                            <span>Light</span>
+                        </button>
+                        <button class="theme-btn theme-btn--dark" data-theme="dark">
+                            <span class="material-icons">dark_mode</span>
+                            <span>Dark</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Accent Color</label>
+                    <div class="color-picker">
+                        {% for color_name, color_value in config.PRIMARY_COLORS.items() %}
+                        <button class="color-option" 
+                                data-color="{{ color_value }}" 
+                                style="background-color: {{ color_value }}"
+                                {% if color_value == '#2196F3' %}data-selected="true"{% endif %}>
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Study Goals -->
+        <div class="settings-section">
+            <div class="section-header">
+                <h2 class="section-title">Study Goals</h2>
+                <p class="section-subtitle">Set your daily study targets</p>
+            </div>
+            
+            <div class="settings-form">
+                <div class="form-group">
+                    <label class="form-label">Daily Study Goal (hours)</label>
+                    <input type="number" class="form-control" 
+                           value="{{ current_user.study_goal_hours }}" 
+                           min="0.5" max="24" step="0.5"
+                           id="study-goal-input">
+                    <small class="form-help">Set a realistic daily study goal</small>
+                </div>
+                
+                <div class="goal-preview">
+                    <div class="goal-preview__label">Weekly Target:</div>
+                    <div class="goal-preview__value" id="weekly-goal">
+                        {{ (current_user.study_goal_hours * 7)|round(1) }} hours
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="settings-section">
+            <div class="section-header">
+                <h2 class="section-title">Notifications</h2>
+                <p class="section-subtitle">Manage your notification preferences</p>
+            </div>
+            
+            <div class="settings-form">
+                <div class="form-group form-group--checkbox">
+                    <label class="checkbox-label">
+                        <input type="checkbox" class="checkbox-input" 
+                               id="notifications-enabled"
+                               {% if current_user.notifications_enabled %}checked{% endif %}>
+                        <span class="checkbox-custom"></span>
+                        <span class="checkbox-text">Enable browser notifications</span>
+                    </label>
+                    <small class="form-help">Get reminders for upcoming deadlines</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Reminder Time</label>
+                    <select class="form-control" id="reminder-time">
+                        <option value="5">5 minutes before</option>
+                        <option value="15" selected>15 minutes before</option>
+                        <option value="30">30 minutes before</option>
+                        <option value="60">1 hour before</option>
+                        <option value="1440">1 day before</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Management -->
+        <div class="settings-section">
+            <div class="section-header">
+                <h2 class="section-title">Data Management</h2>
+                <p class="section-subtitle">Export and manage your data</p>
+            </div>
+            
+            <div class="settings-form">
+                <div class="form-group">
+                    <label class="form-label">Export Data</label>
+                    <div class="export-options">
+                        <button class="btn btn--outlined" id="export-tasks">
+                            <span class="material-icons">download</span>
+                            Export Tasks (CSV)
+                        </button>
+                        <button class="btn btn--outlined" id="export-progress">
+                            <span class="material-icons">download</span>
+                            Export Progress (CSV)
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Import Data</label>
+                    <div class="import-options">
+                        <input type="file" class="form-control" id="import-file" accept=".csv" style="display: none;">
+                        <button class="btn btn--outlined" id="import-btn">
+                            <span class="material-icons">upload</span>
+                            Import from CSV
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Actions -->
+        <div class="settings-section">
+            <div class="section-header">
+                <h2 class="section-title">Account</h2>
+                <p class="section-subtitle">Manage your account</p>
+            </div>
+            
+            <div class="settings-form">
+                <div class="form-group">
+                    <button class="btn btn--outlined" id="change-password">
+                        <span class="material-icons">lock</span>
+                        Change Password
+                    </button>
+                </div>
+                
+                <div class="form-group">
+                    <button class="btn btn--error" id="delete-account">
+                        <span class="material-icons">delete_forever</span>
+                        Delete Account
+                    </button>
+                    <small class="form-help form-help--error">This action cannot be undone</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal" id="password-modal" x-data="{ open: false }" x-show="open" x-cloak>
+    <div class="modal__overlay" @click="open = false"></div>
+    <div class="modal__content">
+        <div class="modal__header">
+            <h3 class="modal__title">Change Password</h3>
+            <button class="modal__close" @click="open = false">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+        
+        <div class="modal__body">
+            <form id="password-form">
+                <div class="form-group">
+                    <label class="form-label">Current Password</label>
+                    <input type="password" class="form-control" id="current-password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">New Password</label>
+                    <input type="password" class="form-control" id="new-password" required minlength="6">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Confirm New Password</label>
+                    <input type="password" class="form-control" id="confirm-password" required minlength="6">
+                </div>
+            </form>
+        </div>
+        
+        <div class="modal__footer">
+            <button class="btn btn--outlined" @click="open = false">Cancel</button>
+            <button class="btn btn--filled" id="save-password">Save Changes</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Theme toggle
+        const themeBtns = document.querySelectorAll('.theme-btn');
+        themeBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const theme = this.dataset.theme;
+                setTheme(theme);
+                
+                // Update active state
+                themeBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+        
+        // Color picker
+        const colorOptions = document.querySelectorAll('.color-option');
+        colorOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                const color = this.dataset.color;
+                setAccentColor(color);
+                
+                // Update selected state
+                colorOptions.forEach(o => o.removeAttribute('data-selected'));
+                this.setAttribute('data-selected', 'true');
+            });
+        });
+        
+        // Study goal input
+        const studyGoalInput = document.getElementById('study-goal-input');
+        const weeklyGoal = document.getElementById('weekly-goal');
+        
+        studyGoalInput.addEventListener('input', function() {
+            const dailyGoal = parseFloat(this.value) || 0;
+            const weeklyGoalValue = (dailyGoal * 7).toFixed(1);
+            weeklyGoal.textContent = `${weeklyGoalValue} hours`;
+        });
+        
+        // Notifications toggle
+        const notificationsToggle = document.getElementById('notifications-enabled');
+        notificationsToggle.addEventListener('change', function() {
+            if (this.checked) {
+                requestNotificationPermission();
+            }
+        });
+        
+        // Export buttons
+        document.getElementById('export-tasks').addEventListener('click', function() {
+            exportData('tasks');
+        });
+        
+        document.getElementById('export-progress').addEventListener('click', function() {
+            exportData('progress');
+        });
+        
+        // Import button
+        document.getElementById('import-btn').addEventListener('click', function() {
+            document.getElementById('import-file').click();
+        });
+        
+        // Change password
+        document.getElementById('change-password').addEventListener('click', function() {
+            document.getElementById('password-modal').__x.$data.open = true;
+        });
+        
+        // Save password
+        document.getElementById('save-password').addEventListener('click', function() {
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            
+            if (newPassword !== confirmPassword) {
+                alert('New passwords do not match');
+                return;
+            }
+            
+            // Here you would typically make an API call to change the password
+            alert('Password change functionality would be implemented here');
+            document.getElementById('password-modal').__x.$data.open = false;
+        });
+        
+        // Delete account
+        document.getElementById('delete-account').addEventListener('click', function() {
+            if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+                // Here you would typically make an API call to delete the account
+                alert('Account deletion functionality would be implemented here');
+            }
+        });
+    });
+    
+    // Helper functions
+    function setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        
+        // Update theme toggle button
+        const themeToggle = document.getElementById('theme-toggle');
+        if (themeToggle) {
+            themeToggle.innerHTML = theme === 'light' ? '🌙' : '☀️';
+        }
+    }
+    
+    function setAccentColor(color) {
+        document.documentElement.style.setProperty('--md-sys-color-primary', color);
+        localStorage.setItem('accent-color', color);
+    }
+    
+    function requestNotificationPermission() {
+        if ('Notification' in window) {
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    console.log('Notification permission granted');
+                }
+            });
+        }
+    }
+    
+    function exportData(type) {
+        // Here you would implement the actual export functionality
+        alert(`${type} export functionality would be implemented here`);
+    }
+</script>
+{% endblock %}

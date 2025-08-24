@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Debug Buttons - AI Study Planner{% endblock %}
+
+{% block content %}
+<div class="ai-page-container">
+    <div class="ai-page-header">
+        <div class="ai-page-header__content">
+            <h1 class="ai-page-title">🔧 Debug Button Test</h1>
+            <p class="ai-page-subtitle">Testing button functionality</p>
+        </div>
+    </div>
+
+    <div class="ai-form-container">
+        <h2>Test Buttons</h2>
+        <p>Click these buttons to test functionality:</p>
+        
+        <div class="quick-actions__grid" style="margin: 2rem 0;">
+            <button class="ai-btn ai-btn--primary" data-action="add-task">
+                <span class="material-icons">add_task</span>
+                <span>Add Task</span>
+            </button>
+            
+            <button class="ai-btn ai-btn--secondary" data-action="start-pomodoro">
+                <span class="material-icons">timer</span>
+                <span>AI Pomodoro</span>
+            </button>
+            
+            <button class="ai-btn ai-btn--ghost" data-action="view-calendar">
+                <span class="material-icons">calendar_today</span>
+                <span>Smart Calendar</span>
+            </button>
+        </div>
+        
+        <div id="debug-output" style="margin-top: 2rem; padding: 1rem; background: var(--ai-gradient-light); border-radius: 8px;">
+            <h3>Debug Output:</h3>
+            <div id="debug-log"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .ai-page-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .ai-page-header {
+        background: var(--ai-gradient-primary);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+    }
+    
+    .ai-form-container {
+        background: var(--ai-surface-card);
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: var(--ai-shadow);
+        border: 1px solid var(--ai-border);
+    }
+    
+    #debug-log {
+        font-family: monospace;
+        font-size: 0.875rem;
+        color: var(--ai-text-secondary);
+        max-height: 200px;
+        overflow-y: auto;
+        background: var(--ai-surface);
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--ai-border);
+    }
+</style>
+
+<script>
+    // Debug logging
+    function debugLog(message) {
+        const logDiv = document.getElementById('debug-log');
+        const timestamp = new Date().toLocaleTimeString();
+        logDiv.innerHTML += `[${timestamp}] ${message}<br>`;
+        logDiv.scrollTop = logDiv.scrollHeight;
+        console.log(message);
+    }
+    
+    // Override the handleQuickAction function for debugging
+    window.handleQuickAction = function(action) {
+        debugLog(`Handling action: ${action}`);
+        
+        switch(action) {
+            case 'add-task':
+                debugLog('Redirecting to add task page...');
+                window.location.href = '/tasks/new';
+                break;
+            case 'start-pomodoro':
+                debugLog('Starting Pomodoro timer...');
+                startPomodoro();
+                break;
+            case 'view-calendar':
+                debugLog('Redirecting to calendar...');
+                window.location.href = '/calendar';
+                break;
+            default:
+                debugLog(`Unknown action: ${action}`);
+        }
+    };
+    
+    // Test button setup
+    document.addEventListener('DOMContentLoaded', function() {
+        debugLog('Page loaded, setting up buttons...');
+        
+        const buttons = document.querySelectorAll('[data-action]');
+        debugLog(`Found ${buttons.length} buttons with data-action`);
+        
+        buttons.forEach(button => {
+            debugLog(`Button: ${button.dataset.action}`);
+        });
+        
+        // Call the original setup function
+        if (typeof setupQuickActions === 'function') {
+            setupQuickActions();
+            debugLog('setupQuickActions called');
+        } else {
+            debugLog('ERROR: setupQuickActions function not found!');
+        }
+    });
+</script>
+{% endblock %}

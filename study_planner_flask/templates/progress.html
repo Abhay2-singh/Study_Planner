@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+
+{% block title %}Progress - {{ config.STUDY_PLANNER_NAME }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <div class="page-header__content">
+            <h1 class="page-title">Study Progress</h1>
+            <p class="page-subtitle">Track your academic achievements and study patterns</p>
+        </div>
+        <div class="page-header__actions">
+            <button class="btn btn--outlined" id="export-progress">
+                <span class="material-icons">download</span>
+                Export Data
+            </button>
+        </div>
+    </div>
+
+    <!-- Progress Overview -->
+    <div class="progress-overview-grid">
+        <div class="progress-card">
+            <div class="progress-card__header">
+                <h3 class="progress-card__title">Overall Progress</h3>
+                <div class="progress-card__icon">
+                    <span class="material-icons">trending_up</span>
+                </div>
+            </div>
+            <div class="progress-card__content">
+                <div class="progress-stat">
+                    <div class="progress-stat__value" id="overall-progress">0%</div>
+                    <div class="progress-stat__label">Tasks Completed</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-bar__fill" id="overall-progress-bar" data-progress="0"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-card">
+            <div class="progress-card__header">
+                <h3 class="progress-card__title">Study Streak</h3>
+                <div class="progress-card__icon">
+                    <span class="material-icons">local_fire_department</span>
+                </div>
+            </div>
+            <div class="progress-card__content">
+                <div class="progress-stat">
+                    <div class="progress-stat__value" id="study-streak">0</div>
+                    <div class="progress-stat__label">Days in a Row</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-card">
+            <div class="progress-card__header">
+                <h3 class="progress-card__title">Weekly Goal</h3>
+                <div class="progress-card__icon">
+                    <span class="material-icons">flag</span>
+                </div>
+            </div>
+            <div class="progress-card__content">
+                <div class="progress-stat">
+                    <div class="progress-stat__value" id="weekly-goal-progress">0%</div>
+                    <div class="progress-stat__label">Goal Achievement</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-bar__fill" id="weekly-goal-bar" data-progress="0"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-card">
+            <div class="progress-card__header">
+                <h3 class="progress-card__title">Total Study Time</h3>
+                <div class="progress-card__icon">
+                    <span class="material-icons">schedule</span>
+                </div>
+            </div>
+            <div class="progress-card__content">
+                <div class="progress-stat">
+                    <div class="progress-stat__value" id="total-study-time">0h</div>
+                    <div class="progress-stat__label">This Week</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-grid">
+        <!-- Subject Progress Chart -->
+        <div class="chart-section">
+            <div class="section-header">
+                <h2 class="section-title">Subject Progress</h2>
+                <div class="chart-controls">
+                    <select class="form-control" id="progress-range">
+                        <option value="week">This Week</option>
+                        <option value="month" selected>This Month</option>
+                        <option value="semester">This Semester</option>
+                    </select>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="subject-progress-chart" width="400" height="300"></canvas>
+            </div>
+        </div>
+
+        <!-- Study Time Distribution -->
+        <div class="chart-section">
+            <div class="section-header">
+                <h2 class="section-title">Study Time Distribution</h2>
+            </div>
+            <div class="chart-container">
+                <canvas id="study-time-chart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Study Trend -->
+    <div class="chart-section chart-section--full">
+    <div class="section-header">
+        <h2 class="section-title">Weekly Study Trend</h2>
+        <div class="chart-controls">
+            <button class="btn btn--text" id="prev-week">
+                <span class="material-icons">chevron_left</span>
+            </button>
+            <span class="week-display" id="week-display">Week of Dec 16, 2024</span>
+            <button class="btn btn--text" id="next-week">
+                <span class="material-icons">chevron_right</span>
+            </button>
+        </div>
+    </div>
+    <div class="chart-container">
+        <canvas id="weekly-trend-chart" width="800" height="300"></canvas>
+    </div>
+</div>
+
+    <!-- Subject Details -->
+    <div class="subjects-section">
+        <div class="section-header">
+            <h2 class="section-title">Subject Details</h2>
+        </div>
+        
+        <div class="subjects-grid">
+            {% for subject in subjects %}
+            <div class="subject-card">
+                <div class="subject-card__header">
+                    <div class="subject-color" style="background-color: {{ subject.color }}"></div>
+                    <h3 class="subject-card__title">{{ subject.name }}</h3>
+                </div>
+                
+                <div class="subject-card__content">
+                    <div class="subject-stat">
+                        <div class="subject-stat__value">{{ subject.tasks|length }}</div>
+                        <div class="subject-stat__label">Total Tasks</div>
+                    </div>
+                    
+                    <div class="subject-stat">
+                        <div class="subject-stat__value">
+                            {% set completed = subject.tasks|selectattr('status', 'equalto', 'completed')|list|length %}
+                            {% if subject.tasks|length > 0 %}
+                                {{ ((completed / subject.tasks|length) * 100)|round|int }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </div>
+                        <div class="subject-stat__label">Completion Rate</div>
+                    </div>
+                    
+                    <div class="subject-stat">
+                        <div class="subject-stat__value">
+                            {% set study_logs = subject.study_logs|selectattr('date', '>=', 'now'|date - '7 days'|timedelta)|list %}
+                            {% set total_minutes = study_logs|sum(attribute='minutes') %}
+                            {{ (total_minutes / 60)|round(1) }}h
+                        </div>
+                        <div class="subject-stat__label">Study Time (Week)</div>
+                    </div>
+                </div>
+                
+                <div class="subject-card__actions">
+                    <a href="{{ url_for('tasks.add_task') }}?subject={{ subject.id }}" class="btn btn--text btn--small">
+                        <span class="material-icons">add</span>
+                        Add Task
+                    </a>
+                    <button class="btn btn--text btn--small" onclick="viewSubjectDetails({{ subject.id }})">
+                        <span class="material-icons">visibility</span>
+                        View Details
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Study Log -->
+    <div class="study-log-section">
+        <div class="section-header">
+            <h2 class="section-title">Study Log</h2>
+            <button class="btn btn--filled" id="add-study-log">
+                <span class="material-icons">add</span>
+                Log Study Time
+            </button>
+        </div>
+        
+        <div class="study-log-container">
+            <div class="study-log-form" id="study-log-form" style="display: none;">
+                <form class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Subject</label>
+                        <select class="form-control" id="study-log-subject">
+                            {% for subject in subjects %}
+                            <option value="{{ subject.id }}">{{ subject.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Date</label>
+                        <input type="date" class="form-control" id="study-log-date" value="{{ today }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Study Time (minutes)</label>
+                        <input type="number" class="form-control" id="study-log-minutes" min="1" max="480" value="60">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control form-control--textarea" id="study-log-notes" rows="2" placeholder="What did you study?"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn--outlined" id="cancel-study-log">Cancel</button>
+                        <button type="submit" class="btn btn--filled">Save Log</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="study-log-list" id="study-log-list">
+                <!-- Study logs will be populated here -->
+                <div class="empty-state">
+                    <div class="empty-state__icon">
+                        <span class="material-icons">schedule</span>
+                    </div>
+                    <h3 class="empty-state__title">No study logs yet</h3>
+                    <p class="empty-state__description">Start logging your study time to track your progress</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize progress page
+        initializeProgressPage();
+        
+        // Setup event listeners
+        setupProgressEventListeners();
+        
+        // Load initial data
+        loadProgressData();
+    });
+    
+    function initializeProgressPage() {
+        console.log('Progress page initialized');
+        
+        // Initialize charts if StudyPlannerCharts is available
+        if (typeof StudyPlannerCharts !== 'undefined') {
+            initializeCharts();
+        }
+    }
+    
+    function setupProgressEventListeners() {
+        // Progress range selector
+        document.getElementById('progress-range').addEventListener('change', function() {
+            loadProgressData();
+        });
+        
+        // Week navigation
+        document.getElementById('prev-week').addEventListener('click', function() {
+            navigateWeek(-1);
+        });
+        
+        document.getElementById('next-week').addEventListener('click', function() {
+            navigateWeek(1);
+        });
+        
+        // Add study log
+        document.getElementById('add-study-log').addEventListener('click', function() {
+            toggleStudyLogForm();
+        });
+        
+        document.getElementById('cancel-study-log').addEventListener('click', function() {
+            toggleStudyLogForm();
+        });
+        
+        // Study log form submission
+        document.getElementById('study-log-form').querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitStudyLog();
+        });
+        
+        // Export progress
+        document.getElementById('export-progress').addEventListener('click', function() {
+            exportProgressData();
+        });
+    }
+    
+    function loadProgressData() {
+        // Load progress data based on selected range
+        const range = document.getElementById('progress-range').value;
+        
+        // Here you would typically make API calls to get the data
+        // For now, we'll use mock data
+        
+        updateProgressStats({
+            overall: 75,
+            streak: 5,
+            weeklyGoal: 80,
+            totalStudyTime: 28
+        });
+        
+        updateCharts(range);
+    }
+    
+    function updateProgressStats(data) {
+        // Update overall progress
+        document.getElementById('overall-progress').textContent = data.overall + '%';
+        document.getElementById('overall-progress-bar').style.width = data.overall + '%';
+        
+        // Update study streak
+        document.getElementById('study-streak').textContent = data.streak;
+        
+        // Update weekly goal
+        document.getElementById('weekly-goal-progress').textContent = data.weeklyGoal + '%';
+        document.getElementById('weekly-goal-bar').style.width = data.weeklyGoal + '%';
+        
+        // Update total study time
+        document.getElementById('total-study-time').textContent = data.totalStudyTime + 'h';
+    }
+    
+    function updateCharts(range) {
+        if (typeof StudyPlannerCharts === 'undefined') return;
+        
+        // Update subject progress chart
+        const subjectProgressData = {
+            subjects: ['Math', 'Science', 'History', 'English'],
+            progress: [85, 72, 90, 68]
+        };
+        
+        const subjectChart = StudyPlannerCharts.createSubjectProgressChart(
+            document.getElementById('subject-progress-chart'),
+            subjectProgressData
+        );
+        
+        // Update study time chart
+        const studyTimeData = {
+            subjects: ['Math', 'Science', 'History', 'English'],
+            hours: [12, 8, 6, 4]
+        };
+        
+        const studyTimeChart = StudyPlannerCharts.createStudyTimeChart(
+            document.getElementById('study-time-chart'),
+            studyTimeData
+        );
+        
+        // Update weekly trend chart
+        const weeklyTrendData = {
+            days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            hours: [4, 3, 5, 2, 6, 4, 3]
+        };
+        
+        const weeklyTrendChart = StudyPlannerCharts.createWeeklyTrendChart(
+            document.getElementById('weekly-trend-chart'),
+            weeklyTrendData
+        );
+    }
+    
+    function navigateWeek(direction) {
+        // Implement week navigation logic
+        console.log('Navigate week:', direction);
+    }
+    
+    function toggleStudyLogForm() {
+        const form = document.getElementById('study-log-form');
+        const isVisible = form.style.display !== 'none';
+        form.style.display = isVisible ? 'none' : 'block';
+    }
+    
+    function submitStudyLog() {
+        // Implement study log submission
+        const formData = {
+            subject: document.getElementById('study-log-subject').value,
+            date: document.getElementById('study-log-date').value,
+            minutes: document.getElementById('study-log-minutes').value,
+            notes: document.getElementById('study-log-notes').value
+        };
+        
+        console.log('Submit study log:', formData);
+        
+        // Here you would make an API call to save the study log
+        
+        // Hide form and refresh data
+        toggleStudyLogForm();
+        loadProgressData();
+    }
+    
+    function viewSubjectDetails(subjectId) {
+        // Implement subject details view
+        console.log('View subject details:', subjectId);
+    }
+    
+    function exportProgressData() {
+        // Implement progress data export
+        console.log('Export progress data');
+        alert('Export functionality would be implemented here');
+    }
+</script>
+{% endblock %}

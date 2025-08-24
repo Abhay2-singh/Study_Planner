@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Test AI Buttons - Smart Study Planning{% endblock %}
+
+{% block content %}
+<div class="ai-page-container">
+    <div class="ai-page-header">
+        <div class="ai-page-header__content">
+            <h1 class="ai-page-title">🧠 Test AI Buttons</h1>
+            <p class="ai-page-subtitle">Testing the AI Pomodoro and Smart Calendar functionality</p>
+        </div>
+        <div class="ai-page-header__actions">
+            <a href="{{ url_for('dashboard') }}" class="ai-btn ai-btn--ghost">
+                <span class="material-icons">arrow_back</span>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="ai-form-container">
+        <h2 class="ai-text-gradient">Test Quick Actions</h2>
+        <p>Click the buttons below to test the AI Pomodoro and Smart Calendar functionality:</p>
+        
+        <div class="quick-actions__grid" style="margin-top: 2rem;">
+            <button class="ai-btn ai-btn--primary" data-action="start-pomodoro">
+                <span class="material-icons">timer</span>
+                <span>Test AI Pomodoro</span>
+            </button>
+            
+            <button class="ai-btn ai-btn--secondary" data-action="view-calendar">
+                <span class="material-icons">calendar_today</span>
+                <span>Test Smart Calendar</span>
+            </button>
+            
+            <button class="ai-btn ai-btn--ghost" data-action="add-task">
+                <span class="material-icons">add_task</span>
+                <span>Test Add Task</span>
+            </button>
+            
+            <button class="ai-btn ai-btn--ghost" data-action="manage-subjects">
+                <span class="material-icons">school</span>
+                <span>Test Manage Subjects</span>
+            </button>
+        </div>
+        
+        <div style="margin-top: 2rem; padding: 1rem; background: var(--ai-gradient-light); border-radius: 8px;">
+            <h3>Expected Behavior:</h3>
+            <ul>
+                <li><strong>AI Pomodoro:</strong> Should open a modal with a 25-minute timer</li>
+                <li><strong>Smart Calendar:</strong> Should redirect to the calendar page</li>
+                <li><strong>Add Task:</strong> Should redirect to the add task page</li>
+                <li><strong>Manage Subjects:</strong> Should redirect to the subjects page</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+    .ai-page-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .ai-page-header {
+        background: var(--ai-gradient-primary);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .ai-page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="2" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23dots)"/></svg>');
+    }
+    
+    .ai-page-header__content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .ai-page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .ai-page-subtitle {
+        font-size: 1rem;
+        opacity: 0.9;
+    }
+    
+    .ai-page-header__actions {
+        position: relative;
+        z-index: 2;
+        margin-top: 1rem;
+    }
+    
+    .ai-form-container {
+        background: var(--ai-surface-card);
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: var(--ai-shadow);
+        border: 1px solid var(--ai-border);
+        backdrop-filter: blur(10px);
+    }
+    
+    .quick-actions__grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .ai-page-container {
+            padding: 1rem;
+        }
+        
+        .quick-actions__grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
